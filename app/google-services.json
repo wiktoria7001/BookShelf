@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27716497969",
+    "project_id": "bookshelfdsw",
+    "storage_bucket": "bookshelfdsw.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27716497969:android:96f3342b0b7d5279da9b10",
+        "android_client_info": {
+          "package_name": "com.dsw.pam.bookshelf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZ4O6-lBd_e3LppRzNBX2C00JE9dqVuYo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

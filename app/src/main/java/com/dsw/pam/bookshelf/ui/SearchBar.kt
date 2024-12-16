@@ -23,7 +23,11 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.ui.draw.alpha
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.analytics.logEvent
 
 @Composable
 fun MainAppBar(
@@ -80,8 +84,13 @@ fun OpenedAppBar(
     text: String,
     onTextChange: (String) -> Unit,
     onCloseClicked: () -> Unit,
-    onSearchClicked: (String) -> Unit,
+    onSearchClicked: (String) -> Unit
 ) {
+    val firebaseAnalytics = Firebase.analytics
+    firebaseAnalytics.logEvent("search_performed") {
+        param("search_query", text)
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -112,7 +121,12 @@ fun OpenedAppBar(
                 IconButton(
                     modifier = Modifier
                         .alpha(0.6f),
-                    onClick = { onSearchClicked(text) }
+                    onClick = {
+                        onSearchClicked(text)
+                        firebaseAnalytics.logEvent("search_performed") {
+                            param("search_query", text)
+                        }
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -144,6 +158,10 @@ fun OpenedAppBar(
             keyboardActions = KeyboardActions(
                 onSearch = {
                     onSearchClicked(text)
+                    // Logowanie zdarzenia wyszukiwania do Firebase
+                    firebaseAnalytics.logEvent("search_performed") {
+                        param("search_query", text)
+                    }
                 }
             ),
             colors = TextFieldDefaults.textFieldColors(
@@ -153,3 +171,4 @@ fun OpenedAppBar(
         )
     }
 }
+
