@@ -25,8 +25,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.ui.draw.alpha
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.logEvent
 
 @Composable
@@ -36,7 +37,8 @@ fun MainAppBar(
     onTextChange: (String) -> Unit,
     onCloseClicked: () -> Unit,
     onSearchClicked: (String) -> Unit,
-    onSearchTriggered: () -> Unit
+    onSearchTriggered: () -> Unit,
+    viewModel: BooksViewModel = viewModel()
 ) {
     when (searchWidgetState) {
         SearchWidgetState.CLOSED -> {
@@ -49,7 +51,8 @@ fun MainAppBar(
                 text = searchTextState,
                 onTextChange = onTextChange,
                 onCloseClicked = onCloseClicked,
-                onSearchClicked = onSearchClicked
+                onSearchClicked = onSearchClicked,
+                viewModel = viewModel
             )
         }
     }
@@ -70,98 +73,84 @@ fun ClosedAppBar(onSearchClicked: () -> Unit) {
             ) {
                 Icon(
                     imageVector = Icons.Filled.Search,
-                    contentDescription = "SearchIcon",
+                    contentDescription = "Search Icon",
                     tint = Color.Black
                 )
-
             }
         }
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpenedAppBar(
     text: String,
     onTextChange: (String) -> Unit,
     onCloseClicked: () -> Unit,
-    onSearchClicked: (String) -> Unit
+    onSearchClicked: (String) -> Unit,
+    viewModel: BooksViewModel
 ) {
-    val firebaseAnalytics = Firebase.analytics
-    firebaseAnalytics.logEvent("search_performed") {
-        param("search_query", text)
-    }
+    val firebaseAnalytics = FirebaseAnalytics.getInstance(LocalContext.current)
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
+        modifier = Modifier.fillMaxWidth().height(56.dp),
         shadowElevation = 4.dp,
         color = MaterialTheme.colorScheme.primary
     ) {
         TextField(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             value = text,
-            onValueChange = {
-                onTextChange(it)
-            },
+            onValueChange = { onTextChange(it) },
             placeholder = {
                 Text(
-                    modifier = Modifier
-                        .alpha(0.6f),
+                    modifier = Modifier.alpha(0.6f),
                     text = "Search here...",
                     color = Color.White
                 )
             },
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = Color.White
-            ),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
             singleLine = true,
             leadingIcon = {
                 IconButton(
-                    modifier = Modifier
-                        .alpha(0.6f),
+                    modifier = Modifier.alpha(0.6f),
                     onClick = {
                         onSearchClicked(text)
                         firebaseAnalytics.logEvent("search_performed") {
                             param("search_query", text)
                         }
+                        viewModel.saveSearchQuery(text)
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Search,
+                        imageVector = Icons.Filled.Search,
                         contentDescription = "Search Icon",
                         tint = Color.White
                     )
                 }
             },
             trailingIcon = {
-                IconButton(
-                    onClick = {
-                        if (text.isNotEmpty()) {
-                            onTextChange("")
-                        } else {
-                            onCloseClicked()
-                        }
+                IconButton(onClick = {
+                    if (text.isNotEmpty()) {
+                        onTextChange("")
+                    } else {
+                        onCloseClicked()
                     }
-                ) {
+                }) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Icons.Filled.Close,
                         contentDescription = "Close Icon",
                         tint = Color.White
                     )
                 }
             },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search
-            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(
                 onSearch = {
                     onSearchClicked(text)
-                    // Logowanie zdarzenia wyszukiwania do Firebase
                     firebaseAnalytics.logEvent("search_performed") {
                         param("search_query", text)
                     }
+                    viewModel.saveSearchQuery(text)
                 }
             ),
             colors = TextFieldDefaults.textFieldColors(
@@ -171,4 +160,3 @@ fun OpenedAppBar(
         )
     }
 }
-

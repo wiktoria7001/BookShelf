@@ -56,6 +56,7 @@ dependencies {
     implementation (libs.androidx.lifecycle.viewmodel.compose)
     implementation (libs.kotlinx.coroutines.android)
     implementation(libs.firebase.analytics)
+    implementation (libs.firebase.firestore.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

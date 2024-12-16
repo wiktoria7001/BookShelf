@@ -10,10 +10,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dsw.pam.bookshelf.BooksApplication
 import com.dsw.pam.bookshelf.data.Book
 import com.dsw.pam.bookshelf.data.BooksRepository
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
-
 
 sealed interface BooksUiState {
     data class Success(val bookSearch: List<Book>) : BooksUiState
@@ -48,7 +49,6 @@ class BooksViewModel(
         getBooks()
     }
 
-
     fun getBooks(query: String = "book", maxResults: Int = 40) {
         viewModelScope.launch {
             booksUiState = BooksUiState.Loading
@@ -61,6 +61,23 @@ class BooksViewModel(
                     BooksUiState.Error
                 }
         }
+    }
+
+    fun saveSearchQuery(query: String) {
+        val db = FirebaseFirestore.getInstance()
+        val searchEntry = hashMapOf(
+            "query" to query,
+            "timestamp" to FieldValue.serverTimestamp()
+        )
+
+        db.collection("searches")
+            .add(searchEntry)
+            .addOnSuccessListener {
+                println("Search query saved successfully.")
+            }
+            .addOnFailureListener {
+                println("Error saving search query: $it")
+            }
     }
 
     companion object {
