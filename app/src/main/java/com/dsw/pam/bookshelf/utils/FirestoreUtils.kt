@@ -1,12 +1,13 @@
 package com.dsw.pam.bookshelf.utils
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 fun saveSearchQuery(query: String) {
     val db = FirebaseFirestore.getInstance()
     val searchEntry = hashMapOf(
         "query" to query,
-        "timestamp" to System.currentTimeMillis()
+        "timestamp" to FieldValue.serverTimestamp()
     )
 
     db.collection("searches")

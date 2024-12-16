@@ -1,5 +1,6 @@
 package com.dsw.pam.bookshelf.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -18,14 +19,20 @@ import androidx.compose.ui.unit.dp
 import com.dsw.pam.bookshelf.R
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.logEvent
@@ -38,13 +45,12 @@ fun MainAppBar(
     onCloseClicked: () -> Unit,
     onSearchClicked: (String) -> Unit,
     onSearchTriggered: () -> Unit,
+    onHistoryClicked: () -> Unit,
     viewModel: BooksViewModel = viewModel()
 ) {
     when (searchWidgetState) {
         SearchWidgetState.CLOSED -> {
-            ClosedAppBar (
-                onSearchClicked = onSearchTriggered
-            )
+            ClosedAppBar(onSearchClicked = onSearchTriggered, onHistoryClicked = onHistoryClicked)
         }
         SearchWidgetState.OPENED -> {
             OpenedAppBar(
@@ -60,7 +66,10 @@ fun MainAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClosedAppBar(onSearchClicked: () -> Unit) {
+fun ClosedAppBar(
+    onSearchClicked: () -> Unit,
+    onHistoryClicked: () -> Unit
+) {
     TopAppBar(
         title = {
             Text(
@@ -68,18 +77,51 @@ fun ClosedAppBar(onSearchClicked: () -> Unit) {
             )
         },
         actions = {
-            IconButton(
-                onClick = { onSearchClicked() }
-            ) {
+            IconButton(onClick = onSearchClicked) {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Search Icon",
                     tint = Color.Black
                 )
             }
+            IconButton(onClick = onHistoryClicked) {
+                Image(
+                    painter = painterResource(id = R.drawable.history),
+                    contentDescription = "History Icon",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     )
 }
+
+
+@Composable
+fun SearchHistoryDialog(
+    searchHistory: List<SearchHistoryEntry>,
+    onDismissRequest: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Close")
+            }
+        },
+        title = {Text("Search History") },
+        text = {
+            LazyColumn {
+                items(searchHistory) { entry ->
+                    Text(
+                        text = "${entry.query}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    )
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

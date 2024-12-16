@@ -12,6 +12,8 @@ import com.dsw.pam.bookshelf.data.Book
 import com.dsw.pam.bookshelf.data.BooksRepository
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -22,6 +24,10 @@ sealed interface BooksUiState {
     object Loading : BooksUiState
 }
 
+data class SearchHistoryEntry(
+    val query: String
+)
+
 class BooksViewModel(
     private val booksRepository: BooksRepository
 ) : ViewModel() {
@@ -29,13 +35,14 @@ class BooksViewModel(
     var booksUiState: BooksUiState by mutableStateOf(BooksUiState.Loading)
         private set
 
-    private val _searchWidgetState: MutableState<SearchWidgetState> =
-        mutableStateOf(value = SearchWidgetState.CLOSED)
-    val searchWidgetState: State<SearchWidgetState> = _searchWidgetState
+    private val _searchWidgetState = MutableStateFlow(SearchWidgetState.CLOSED)
+    val searchWidgetState: StateFlow<SearchWidgetState> = _searchWidgetState
 
-    private val _searchTextState: MutableState<String> =
-        mutableStateOf(value = "")
-    val searchTextState: State<String> = _searchTextState
+    private val _searchTextState = MutableStateFlow("")
+    val searchTextState: StateFlow<String> = _searchTextState
+
+    private val _searchHistory = MutableStateFlow<List<SearchHistoryEntry>>(emptyList())
+    val searchHistory: StateFlow<List<SearchHistoryEntry>> = _searchHistory
 
     fun updateSearchWidgetState(newValue: SearchWidgetState) {
         _searchWidgetState.value = newValue
@@ -47,6 +54,7 @@ class BooksViewModel(
 
     init {
         getBooks()
+        loadSearchHistory()
     }
 
     fun getBooks(query: String = "book", maxResults: Int = 40) {
@@ -74,9 +82,30 @@ class BooksViewModel(
             .add(searchEntry)
             .addOnSuccessListener {
                 println("Search query saved successfully.")
+                loadSearchHistory()
             }
             .addOnFailureListener {
                 println("Error saving search query: $it")
+            }
+    }
+
+    private fun loadSearchHistory() {
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("searches")
+            .get()
+            .addOnSuccessListener { documents ->
+                val history = documents.map { document ->
+                    val query = document.getString("query") ?: ""
+
+                    SearchHistoryEntry(
+                        query = query
+                    )
+                }
+                _searchHistory.value = history
+            }
+            .addOnFailureListener {
+                println("Error fetching search history: $it")
             }
     }
 
